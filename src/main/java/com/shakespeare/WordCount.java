@@ -22,10 +22,9 @@ import org.apache.hadoop.mapreduce.Counter;
 public class WordCount {
 
   public static class TokenizerMapper
-       extends Mapper<Object, Text, Text, IntWritable>{
+       extends Mapper<Object, Text, Text, Text>{
     static enum CountersEnum { INPUT_WORDS }
 
-    private final static IntWritable one = new IntWritable(1);
     private Text word = new Text();
 
     private boolean caseSensitive;
@@ -76,7 +75,7 @@ public class WordCount {
       while (itr.hasMoreTokens()) {
         word.set(itr.nextToken());
         if(word.getLength()>=3){
-          context.write(word, one);
+          context.write(word, new Text("1"));
           Counter counter = context.getCounter(CountersEnum.class.getName(),
           CountersEnum.INPUT_WORDS.toString());
           counter.increment(1);
@@ -87,7 +86,7 @@ public class WordCount {
   
 
 public static class IntSumReducer
-    extends Reducer<Text,IntWritable,Text,Text> {
+    extends Reducer<Text,Text,Text,Text> {
   private IntWritable result = new IntWritable();
   private Text word = new Text();
 
@@ -100,7 +99,7 @@ public static class IntSumReducer
                     throws IOException, InterruptedException {
       int sum = 0;
       for (IntWritable val : values) {
-          sum += val.get();
+          sum += Integer.valueOf(val.toString());
       }
       //result.set(sum);
       treeMap.put(new Integer(sum), key.toString());
