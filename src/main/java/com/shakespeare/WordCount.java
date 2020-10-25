@@ -42,7 +42,7 @@ public class WordCount {
         protected void setup(Context context) throws IOException, InterruptedException{
             FileSystem fs = FileSystem.get(context.getConfiguration());
 
-            Path path1 = new Path("hdfs://lyyq181850099-master:90000/wordcount/stop-word-list.txt");
+            Path path1 = new Path("hdfs://lyyq181850099-master:9000/wordcount/stop-word-list.txt");
             BufferedReader reader1 = new BufferedReader(new InputStreamReader(fs.open(path1)));
             String line;
             while ((line = reader1.readLine()) != null) {
@@ -50,7 +50,7 @@ public class WordCount {
             }
             reader1.close();
 
-            Path path2 = new Path("hdfs://lyyq181850099-master:90000/wordcount/punctuation.txt");
+            Path path2 = new Path("hdfs://lyyq181850099-master:9000/wordcount/punctuation.txt");
             BufferedReader reader2 = new BufferedReader(new InputStreamReader(fs.open(path2)));
             String line2;
             while ((line2 = reader2.readLine()) != null) {
