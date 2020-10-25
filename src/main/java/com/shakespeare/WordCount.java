@@ -16,7 +16,6 @@ import org.apache.hadoop.mapreduce.Reducer;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.mapreduce.lib.input.FileInputFormat;
 import org.apache.hadoop.mapreduce.lib.output.FileOutputFormat;
-import org.apache.hadoop.util.GenericOptionsParser;
 import org.apache.hadoop.mapreduce.Counter;
 
 public class WordCount {
@@ -27,43 +26,34 @@ public class WordCount {
 
     private Text word = new Text();
 
-    private boolean caseSensitive;
     private Set<String> patternsToSkip = new HashSet<>();
     private Set<String> punctuation=new HashSet<>();
-
-    private Configuration conf;
 
     @Override
     public void setup(Context context) throws IOException,
         InterruptedException {
-      conf = context.getConfiguration();
-      caseSensitive = conf.getBoolean("wordcount.case.sensitive", true);
-      if (conf.getBoolean("wordcount.skip.patterns", true)) {
-        FileSystem fs = FileSystem.get(context.getConfiguration());
+      FileSystem fs = FileSystem.get(context.getConfiguration());
 
-        Path path1 = new Path("hdfs://lyyq181850099-master:9000/wordcount/stop-word-list.txt");
-        BufferedReader reader1 = new BufferedReader(new InputStreamReader(fs.open(path1)));
-        String line;
-        while ((line = reader1.readLine()) != null) {
-            patternsToSkip.add(line.toLowerCase());
-        }
-        reader1.close();
-
-        Path path2 = new Path("hdfs://lyyq181850099-master:9000/wordcount/punctuation.txt");
-        BufferedReader reader2 = new BufferedReader(new InputStreamReader(fs.open(path2)));
-        String line2;
-        while ((line2 = reader2.readLine()) != null) {
-            punctuation.add(line2.toLowerCase());
-          }
-        reader2.close();
-        }
+      Path path1 = new Path("hdfs://lyyq181850099-master:9000/wordcount/stop-word-list.txt");
+      BufferedReader reader1 = new BufferedReader(new InputStreamReader(fs.open(path1)));
+      String line;
+      while ((line = reader1.readLine()) != null) {
+          patternsToSkip.add(line.toLowerCase());
       }
+      reader1.close();
+      Path path2 = new Path("hdfs://lyyq181850099-master:9000/wordcount/punctuation.txt");
+      BufferedReader reader2 = new BufferedReader(new InputStreamReader(fs.open(path2)));
+      String line2;
+      while ((line2 = reader2.readLine()) != null) {
+          punctuation.add(line2.toLowerCase());
+        }
+      reader2.close();
+    }
 
     @Override
     public void map(Object key, Text value, Context context
                     ) throws IOException, InterruptedException {
-      String line = (caseSensitive) ?
-          value.toString() : value.toString().toLowerCase();
+      String line = value.toString().toLowerCase();
       line = line.replaceAll("\\d+"," ");
       for (String pattern : patternsToSkip) {
         line = line.replaceAll(pattern, "");
@@ -116,20 +106,13 @@ public static class IntSumReducer
           this.word.set(count+": "+entry.getValue()+", "+entry.getKey());
           context.write(word, new Text(""));
           count++;
-          if(count>=100) {break;}
+          if(count>=100) {return;}
        }
      }
   }
   
   public static void main(String[] args) throws Exception {
     Configuration conf = new Configuration();
-
-    GenericOptionsParser optionParser = new GenericOptionsParser(conf, args);
-    String[] remainingArgs = optionParser.getRemainingArgs();
-    if (!(remainingArgs.length != 2 || remainingArgs.length != 3)) {
-      System.err.println("Usage: wordcount <in> <out> [-skip]");
-      System.exit(2);
-    }
     
     Job job = Job.getInstance(conf, "word count");
     job.setJarByClass(WordCount.class);
@@ -138,12 +121,6 @@ public static class IntSumReducer
     job.setReducerClass(IntSumReducer.class);
     job.setOutputKeyClass(Text.class);
     job.setOutputValueClass(Text.class);
-
-    for (int i=0; i < remainingArgs.length; ++i) {
-      if ("-skip".equals(remainingArgs[i])) {
-        job.getConfiguration().setBoolean("wordcount.skip.patterns", true);
-      } 
-    }
 
     Path outPath=new Path(args[1]);
         FileSystem fs = FileSystem.get(conf);
