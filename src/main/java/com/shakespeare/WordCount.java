@@ -63,6 +63,7 @@ public class WordCount {
             StringTokenizer itr = new StringTokenizer(value.toString());
             while (itr.hasMoreTokens()) {
                 String str=itr.nextToken().toLowerCase();
+                str = str.replaceAll("\\d+","");
                 for (String pun: this.punc ){
                     str=str.replaceAll(pun,"");
                 }
