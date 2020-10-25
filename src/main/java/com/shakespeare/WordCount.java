@@ -87,7 +87,7 @@ public class WordCount {
   
 
 public static class IntSumReducer
-    extends Reducer<Text,IntWritable,Text,IntWritable> {
+    extends Reducer<Text,IntWritable,Text,Text> {
   private IntWritable result = new IntWritable();
   private Text word = new Text();
 
@@ -115,7 +115,7 @@ public static class IntSumReducer
     for (Map.Entry<Integer, String> entry : set) {
           this.result.set(entry.getKey());
           this.word.set(count+": "+entry.getValue()+", "+entry.getKey());
-          context.write(word, new IntWritable());
+          context.write(word, new Text(""));
           count++;
           if(count>=100) {break;}
        }
@@ -138,7 +138,7 @@ public static class IntSumReducer
     job.setCombinerClass(IntSumReducer.class);
     job.setReducerClass(IntSumReducer.class);
     job.setOutputKeyClass(Text.class);
-    job.setOutputValueClass(IntWritable.class);
+    job.setOutputValueClass(Text.class);
 
     for (int i=0; i < remainingArgs.length; ++i) {
       if ("-skip".equals(remainingArgs[i])) {
