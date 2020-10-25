@@ -63,8 +63,9 @@ public class WordCount {
       }
       StringTokenizer itr = new StringTokenizer(line);
       while (itr.hasMoreTokens()) {
-        word.set(itr.nextToken());
-        if(word.getLength()>=3){
+        String wordstr=itr.nextToken();
+        if(wordstr.length()>=3){
+          word.set(wordstr);
           context.write(word, new Text("1"));
           Counter counter = context.getCounter(CountersEnum.class.getName(),
           CountersEnum.INPUT_WORDS.toString());
@@ -106,7 +107,7 @@ public static class IntSumReducer
           this.word.set(count+": "+entry.getValue()+", "+entry.getKey());
           context.write(word, new Text(""));
           count++;
-          if(count>=100) {return;}
+          if(count>=100) {break;}
        }
      }
   }
