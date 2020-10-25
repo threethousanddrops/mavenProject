@@ -111,17 +111,7 @@ public static class IntSumReducer
       treeMap.put(sum, key.toString());
       //treeMap.put(new Integer(sum),key.toString());
       //context.write(key, result);
-      int count =0;
-      for(Integer akey : treeMap.keySet()){
-        if(count==5){
-          break;
-          }
-        else{
-          context.write(new Text(treeMap.get(akey)),new IntWritable(akey));
-          }
-          count=count+1;
-        }
-      }
+    }
 
   protected void cleanup(Context context)
       throws IOException,InterruptedException{
