@@ -67,7 +67,7 @@ public class WordCount {
                 for (String pun: this.punc ){
                     str=str.replaceAll(pun,"");
                 }
-                if(this.stopWords.contains(str)||str.length()==0)
+                if(this.stopWords.contains(str)||str.length()<3)
                     continue;
                else{
                     this.word.set(str);
