@@ -86,11 +86,11 @@ public static class IntSumReducer
     public int compare(Integer x,Integer y){return y.compareTo(x);}
   });
   
-  public void reduce(Text key, Iterable<IntWritable> values,Context context) 
+  public void reduce(Text key, Iterable<Text> values,Context context) 
                     throws IOException, InterruptedException {
       int sum = 0;
-      for (IntWritable val : values) {
-          sum += Integer.valueOf(val.toString());
+      for (Text val : values) {
+          sum+= Integer.valueOf(val.toString());
       }
       //result.set(sum);
       treeMap.put(new Integer(sum), key.toString());
@@ -107,7 +107,7 @@ public static class IntSumReducer
           this.word.set(count+": "+entry.getValue()+", "+entry.getKey());
           context.write(word, new Text(""));
           count++;
-          if(count>=100) {break;}
+          if(count>100) {break;}
        }
      }
   }
