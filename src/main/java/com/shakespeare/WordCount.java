@@ -93,7 +93,8 @@ public class WordCount {
 
 public static class IntSumReducer
     extends Reducer<Text,IntWritable,Text,IntWritable> {
-  //private IntWritable result = new IntWritable();
+  private IntWritable result = new IntWritable();
+  private Text word = new Text();
 
   private TreeMap<Integer,String> treeMap = new TreeMap<Integer,String>(new Comparator<Integer>(){
     @Override
@@ -109,10 +110,7 @@ public static class IntSumReducer
       //result.set(sum);
       treeMap.put(sum, key.toString());
       //treeMap.put(new Integer(sum),key.toString());
-      /*if(treeMap.size()>100){
-        treeMap.remove(treeMap.lastKey());
-      }
-      context.write(key, result);*/
+      //context.write(key, result);
       int count =0;
       for(Integer akey : treeMap.keySet()){
         if(count==5){
@@ -124,7 +122,21 @@ public static class IntSumReducer
           count=count+1;
         }
       }
-    }
+
+  protected void cleanup(Context context)
+      throws IOException,InterruptedException{
+    Set<Map.Entry<Integer, String>> set = treeMap.entrySet();
+    int count =1;
+    for (Map.Entry<Integer, String> entry : set) {
+          this.result.set(entry.getKey());
+          this.word.set(count+":"+entry.getValue()+", "+entry.getKey());
+          context.write(word, new IntWritable());
+          count++;
+          if(count>=100)
+          break;
+       }
+     }
+  }
   
   public static void main(String[] args) throws Exception {
     Configuration conf = new Configuration();
@@ -153,6 +165,7 @@ public static class IntSumReducer
         otherArgs.add(remainingArgs[i]);
       }
     }
+
     FileInputFormat.addInputPath(job, new Path(otherArgs.get(0)));
     FileOutputFormat.setOutputPath(job, new Path(otherArgs.get(1)));
 
