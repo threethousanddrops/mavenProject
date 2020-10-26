@@ -4,6 +4,7 @@
 实验运行环境：BDKIT
 
 运行命令：hadoop jar target/mavenWordCount-1.0-SNAPSHOT.jar com.shakespeare.WordCount /wordcount/input /wordcount/output -skip
+
 运行截图：
 ![web](https://github.com/threethousanddrops/mavenProject/blob/main/images/web.png)
 ![output1](https://github.com/threethousanddrops/mavenProject/blob/main/images/output1.png)
