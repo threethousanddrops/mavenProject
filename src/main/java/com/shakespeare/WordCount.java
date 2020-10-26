@@ -75,21 +75,18 @@ public static class IntSumReducer extends Reducer<Text, Text, Text, Text> {
             return y.compareTo(x);
         }
     });
-    public void reduce(Text key, Iterable<Text> values, Context context) throws IOException, InterruptedException
-    {
-        int sum = 0;
-        for (Text val: values)
-        {
-            sum+=Integer.valueOf(val.toString());
-        }
-        //result.set(sum);
-        treeMap.put(new Integer(sum), key.toString());
-         if(treeMap.size()>100) {
-             treeMap.remove(treeMap.lastKey());
-         }
-        //treeMap.put(sum,key.toString());
-        //context.write(key, result);
-    }
+    public void reduce(Text key, Iterable<Text> values, Context context)
+               throws IOException, InterruptedException{
+          int sum = 0;
+          for (Text val: values)
+          {
+              sum+=Integer.valueOf(val.toString());
+          }
+          treeMap.put(new Integer(sum), key.toString());
+          if(treeMap.size()>100) {
+              treeMap.remove(treeMap.lastKey());
+          }
+      }
     protected void cleanup(Context context)
         throws IOException,InterruptedException{
         Set<Map.Entry<Integer, String>> set = treeMap.entrySet();
