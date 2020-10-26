@@ -54,13 +54,13 @@ public static class TokenizerMapper extends Mapper<Object, Text, Text, Text> {
             String wordstr=itr.nextToken().toLowerCase();
             //delete all numbers
             wordstr=wordstr.replaceAll("\\d+","");
-            //if use regular expression:
+            //if use regular expression
             //wordstr=wordstr.replaceAll( "[\\p{P}+~$`^=|<>～｀＄＾＋＝｜＜＞￥×]" , ""); 
             for (String pun: this.punctuation){
               wordstr=wordstr.replaceAll(pun,"");
             }
             //if replaceall patternsToskip , "yellow & low" will appeare
-            if((!this.patternsToskip.contains(wordstr))||wordstr.length()>=3){
+            if(!(this.patternsToskip.contains(wordstr))&&wordstr.length()>=3){
                 this.word.set(wordstr);
                 context.write(this.word, new Text("1"));
                 Counter counter = context.getCounter(CountersEnum.class.getName(), CountersEnum.INPUT_WORDS.toString());
@@ -105,7 +105,6 @@ public static class IntSumReducer extends Reducer<Text, Text, Text, Text> {
             this.word.set(count+":"+entry.getValue()+", "+entry.getKey());
             context.write(word, new Text(""));
             count++;
-            //out top 100
             if(count>100){
               return;
             }
