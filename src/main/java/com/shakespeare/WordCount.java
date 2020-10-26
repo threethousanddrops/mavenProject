@@ -28,6 +28,7 @@ public static class TokenizerMapper extends Mapper<Object, Text, Text, Text> {
     private Set<String> patternsToskip=new HashSet<>();
     private Set<String> punctuation=new HashSet<>();
     protected void setup(Context context) throws IOException, InterruptedException{
+        //readin stopword & punctuation 
         FileSystem fs = FileSystem.get(context.getConfiguration());
 
         Path path1 = new Path("hdfs://lyyq181850099-master:9000/wordcount/stop-word-list.txt");
@@ -51,27 +52,21 @@ public static class TokenizerMapper extends Mapper<Object, Text, Text, Text> {
         StringTokenizer itr = new StringTokenizer(value.toString());
         while (itr.hasMoreTokens()) {
             String wordstr=itr.nextToken().toLowerCase();
+            //delete all numbers
             wordstr=wordstr.replaceAll("\\d+","");
-            /*for (String pun: punctuation ){
-                wordstr=wordstr.replaceAll(pun,"");
-            }
-            for (String pskip: patternsToSkip){
-              wordstr=wordstr.replaceAll(pskip,"");
-            }*/
+            //if use regular expression:
+            //wordstr=wordstr.replaceAll( "[\\p{P}+~$`^=|<>～｀＄＾＋＝｜＜＞￥×]" , ""); 
             for (String pun: this.punctuation){
               wordstr=wordstr.replaceAll(pun,"");
             }
-            //if replaceall patternsToskip , yellow & low will appeare
-            if(this.patternsToskip.contains(wordstr)||wordstr.length()<3)
-                continue;
-           else{
+            //if replaceall patternsToskip , "yellow & low" will appeare
+            if((!this.patternsToskip.contains(wordstr))||wordstr.length()>=3){
                 this.word.set(wordstr);
                 context.write(this.word, new Text("1"));
                 Counter counter = context.getCounter(CountersEnum.class.getName(), CountersEnum.INPUT_WORDS.toString());
                 counter.increment(1L);
             }
         }
-
     }
 }
 public static class IntSumReducer extends Reducer<Text, Text, Text, Text> {
@@ -79,6 +74,7 @@ public static class IntSumReducer extends Reducer<Text, Text, Text, Text> {
   private IntWritable result = new IntWritable();
     private Text word = new Text();
 
+    //treemap
     private static TreeMap<Integer, String> treeMap = new TreeMap<Integer, String>(new Comparator<Integer>() {
         @Override
         public int compare(Integer x, Integer y) {
@@ -95,9 +91,6 @@ public static class IntSumReducer extends Reducer<Text, Text, Text, Text> {
           }
           //treeMap.put(new sum, key.toString());
           treeMap.put(new Integer(sum), key.toString());
-          /*if(treeMap.size()>100) {
-              treeMap.remove(treeMap.lastKey());
-          }*/
           //result.set(word);
           //context.write(key, result);
       }
@@ -112,6 +105,7 @@ public static class IntSumReducer extends Reducer<Text, Text, Text, Text> {
             this.word.set(count+":"+entry.getValue()+", "+entry.getKey());
             context.write(word, new Text(""));
             count++;
+            //out top 100
             if(count>100){
               return;
             }
