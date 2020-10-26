@@ -16,13 +16,14 @@ import org.apache.hadoop.mapreduce.Reducer;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.mapreduce.lib.input.FileInputFormat;
 import org.apache.hadoop.mapreduce.lib.output.FileOutputFormat;
-//import org.apache.hadoop.mapreduce.Counter;
+import org.apache.hadoop.mapreduce.Counter;
 import org.apache.hadoop.util.GenericOptionsParser;
 
 public class WordCount {
 
 public static class TokenizerMapper extends Mapper<Object, Text, Text, Text> {
-    private static final IntWritable one = new IntWritable(1);
+    enum CountersEnum {INPUT_WORDS;}
+
     private Text word = new Text();
     private Set<String> patternsToskip=new HashSet<>();
     private Set<String> punctuation=new HashSet<>();
@@ -51,14 +52,19 @@ public static class TokenizerMapper extends Mapper<Object, Text, Text, Text> {
         while (itr.hasMoreTokens()) {
             String str=itr.nextToken().toLowerCase();
             str=str.replaceAll("\\d+"," ");
-            for (String pun: this.punctuation ){
-                str=str.replaceAll(pun,"");
-            }
-            if(this.patternsToskip.contains(str)||str.length()<3)
+            /*for (String pun: punctuation ){
+                wordstr=wordstr.replaceAll(pun,"");
+            }
+            for (String pskip: patternsToSkip){
+              wordstr=wordstr.replaceAll(pskip,"");
+            }*/
+            if(this.patternsToskip.contains(str)||this.punctuation.contains(str)||str.length()<3)
                 continue;
            else{
                 this.word.set(str);
                 context.write(this.word, new Text("1"));
+                Counter counter = context.getCounter(CountersEnum.class.getName(), CountersEnum.INPUT_WORDS.toString());
+                counter.increment(1L);
             }
         }
 
@@ -75,6 +81,7 @@ public static class IntSumReducer extends Reducer<Text, Text, Text, Text> {
             return y.compareTo(x);
         }
     });
+
     public void reduce(Text key, Iterable<Text> values, Context context)
                throws IOException, InterruptedException{
           int sum = 0;
@@ -126,5 +133,5 @@ public static class IntSumReducer extends Reducer<Text, Text, Text, Text> {
     FileInputFormat.addInputPath(job, new Path(args[0]));
     FileOutputFormat.setOutputPath(job, outPath);
     System.exit(job.waitForCompletion(true) ? 0 : 1);
-}
+  }
 }
