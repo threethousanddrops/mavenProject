@@ -50,18 +50,21 @@ public static class TokenizerMapper extends Mapper<Object, Text, Text, Text> {
     public void map(Object key, Text value, Context context) throws IOException, InterruptedException {
         StringTokenizer itr = new StringTokenizer(value.toString());
         while (itr.hasMoreTokens()) {
-            String str=itr.nextToken().toLowerCase();
-            str=str.replaceAll("\\d+"," ");
+            String wordstr=itr.nextToken().toLowerCase();
+            wordstr=wordstr.replaceAll("\\d+"," ");
             /*for (String pun: punctuation ){
                 wordstr=wordstr.replaceAll(pun,"");
             }
             for (String pskip: patternsToSkip){
               wordstr=wordstr.replaceAll(pskip,"");
             }*/
-            if(this.patternsToskip.contains(str)||this.punctuation.contains(str)||str.length()<3)
+            for (String pun: this.punctuation){
+              wordstr=wordstr.replaceAll(pun,"");
+            }
+            if(this.patternsToskip.contains(wordstr)||wordstr.length()<3)
                 continue;
            else{
-                this.word.set(str);
+                this.word.set(wordstr);
                 context.write(this.word, new Text("1"));
                 Counter counter = context.getCounter(CountersEnum.class.getName(), CountersEnum.INPUT_WORDS.toString());
                 counter.increment(1L);
