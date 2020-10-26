@@ -16,14 +16,14 @@ import org.apache.hadoop.mapreduce.Reducer;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.mapreduce.lib.input.FileInputFormat;
 import org.apache.hadoop.mapreduce.lib.output.FileOutputFormat;
-import org.apache.hadoop.mapreduce.Counter;
+//import org.apache.hadoop.mapreduce.Counter;
 import org.apache.hadoop.util.GenericOptionsParser;
 
 public class WordCount {
 
   public static class TokenizerMapper 
          extends Mapper<Object, Text, Text, Text> {
-    static enum CountersEnum { INPUT_WORDS }
+    //static enum CountersEnum { INPUT_WORDS }
 
     private Text word = new Text();
     
@@ -31,10 +31,10 @@ public class WordCount {
     private Set<String> punctuation=new HashSet<>();
 
     protected void setup(Context context) throws IOException, InterruptedException{
-        FileSystem fs = FileSystem.get(context.getConfiguration());
+        FileSystem fstm = FileSystem.get(context.getConfiguration());
 
         Path path1 = new Path("hdfs://lyyq181850099-master:9000/wordcount/stop-word-list.txt");
-        BufferedReader reader1 = new BufferedReader(new InputStreamReader(fs.open(path1)));
+        BufferedReader reader1 = new BufferedReader(new InputStreamReader(fstm.open(path1)));
         String line;
         while ((line = reader1.readLine()) != null) {
             patternsToSkip.add(line.toLowerCase());
@@ -42,7 +42,7 @@ public class WordCount {
         reader1.close();
 
         Path path2 = new Path("hdfs://lyyq181850099-master:9000/wordcount/punctuation.txt");
-        BufferedReader reader2 = new BufferedReader(new InputStreamReader(fs.open(path2)));
+        BufferedReader reader2 = new BufferedReader(new InputStreamReader(fstm.open(path2)));
         String line2;
         while ((line2 = reader2.readLine()) != null) {
             punctuation.add(line2.toLowerCase());
@@ -54,20 +54,21 @@ public class WordCount {
         StringTokenizer itr = new StringTokenizer(value.toString());
         while (itr.hasMoreTokens()) {
             String wordstr=itr.nextToken().toLowerCase();
-            for (String pun: punctuation ){
+            /*for (String pun: punctuation ){
                 wordstr=wordstr.replaceAll(pun,"");
             }
             for (String pskip: patternsToSkip){
               wordstr=wordstr.replaceAll(pskip,"");
-            }
-            if(wordstr.length()<3)
+            }*/
+            wordstr=wordstr.replaceAll("\\d+","");
+            if(this.patternsToSkip.contains(wordstr)||this.punctuation.contains(wordstr)||wordstr.length()<3)
                 continue;
            else{
                 word.set(wordstr);
                 context.write(word, new Text("1"));
-                Counter counter = context.getCounter(CountersEnum.class.getName(),
+                /*Counter counter = context.getCounter(CountersEnum.class.getName(),
                 CountersEnum.INPUT_WORDS.toString());
-                counter.increment(1);
+                counter.increment(1);*/
             }
         }
     }
@@ -91,7 +92,7 @@ public static class IntSumReducer
       }
       //result.set(sum);
       treeMap.put(new Integer(sum), key.toString());
-      //treeMap.put(new Integer(sum),key.toString());
+      //treeMap.put(sum,key.toString());
       //context.write(key, result);
     }
 
@@ -104,7 +105,7 @@ public static class IntSumReducer
           this.word.set(count+": "+entry.getValue()+", "+entry.getKey());
           context.write(word, new Text(""));
           count++;
-          if(count>100) {break;}
+          if(count>100) {return;}
        }
      }
   }
@@ -127,9 +128,10 @@ public static class IntSumReducer
     job.setOutputValueClass(Text.class);
 
     Path fileoutPath=new Path(args[1]);
-        FileSystem fs = FileSystem.get(conf);
-        if (fs.exists(fileoutPath)) {
-            fs.delete(fileoutPath, true);
+        FileSystem f = FileSystem.get(conf);
+        if (f.exists(fileoutPath)) 
+        {
+            f.delete(fileoutPath, true);
         }
 
     FileInputFormat.addInputPath(job, new Path(args[0]));
