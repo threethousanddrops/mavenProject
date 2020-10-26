@@ -51,7 +51,7 @@ public static class TokenizerMapper extends Mapper<Object, Text, Text, Text> {
         StringTokenizer itr = new StringTokenizer(value.toString());
         while (itr.hasMoreTokens()) {
             String wordstr=itr.nextToken().toLowerCase();
-            wordstr=wordstr.replaceAll("\\d+"," ");
+            wordstr=wordstr.replaceAll("\\d+","");
             /*for (String pun: punctuation ){
                 wordstr=wordstr.replaceAll(pun,"");
             }
@@ -61,6 +61,7 @@ public static class TokenizerMapper extends Mapper<Object, Text, Text, Text> {
             for (String pun: this.punctuation){
               wordstr=wordstr.replaceAll(pun,"");
             }
+            //if replaceall patternsToskip , yellow & low will appeare
             if(this.patternsToskip.contains(wordstr)||wordstr.length()<3)
                 continue;
            else{
@@ -92,20 +93,28 @@ public static class IntSumReducer extends Reducer<Text, Text, Text, Text> {
           {
               sum+=Integer.valueOf(val.toString());
           }
+          //treeMap.put(new sum, key.toString());
           treeMap.put(new Integer(sum), key.toString());
-          if(treeMap.size()>100) {
+          /*if(treeMap.size()>100) {
               treeMap.remove(treeMap.lastKey());
-          }
+          }*/
+          //result.set(word);
+          //context.write(key, result);
       }
+
     protected void cleanup(Context context)
         throws IOException,InterruptedException{
         Set<Map.Entry<Integer, String>> set = treeMap.entrySet();
-        int i =1;
+        int count =1;
         for (Map.Entry<Integer, String> entry : set) {
             this.result.set(entry.getKey());
-            this.word.set(i+":"+entry.getValue()+", "+entry.getKey());
+            //format:"<number>：<word>，<times>
+            this.word.set(count+":"+entry.getValue()+", "+entry.getKey());
             context.write(word, new Text(""));
-            i++;
+            count++;
+            if(count>100){
+              return;
+            }
         }
     }
   }
@@ -113,6 +122,7 @@ public static class IntSumReducer extends Reducer<Text, Text, Text, Text> {
   public static void main(String[] args) throws Exception {
     Configuration conf = new Configuration();
 
+    //stopwords and punctuation are read in without uri
     GenericOptionsParser optionParser = new GenericOptionsParser(conf, args);
     String[] remainingArgs = optionParser.getRemainingArgs();
     if (remainingArgs.length !=3) {
@@ -126,7 +136,8 @@ public static class IntSumReducer extends Reducer<Text, Text, Text, Text> {
     job.setReducerClass(IntSumReducer.class);
     job.setOutputKeyClass(Text.class);
     job.setOutputValueClass(Text.class);
-
+    
+    //check outpath,if already exists then delete it and create a new one.
     Path outPath=new Path(args[1]);
     FileSystem fstm = FileSystem.get(conf);
     if (fstm.exists(outPath)) {
