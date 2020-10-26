@@ -8,7 +8,7 @@
 ![web](https://github.com/threethousanddrops/mavenProject/blob/main/images/web.png)
 ![output1](https://github.com/threethousanddrops/mavenProject/blob/main/images/output1.png)
 ![output2](https://github.com/threethousanddrops/mavenProject/blob/main/images/output2.png)
-![output3](https://github.com/threethousanddrops/mavenProject/blob/main/images/output2.png)
+![output3](https://github.com/threethousanddrops/mavenProject/blob/main/images/output3.png)
 
 
 一．配置java和maven环境。（由于起初没有记录实验思路的要求，配置环境等过程没有截图）
