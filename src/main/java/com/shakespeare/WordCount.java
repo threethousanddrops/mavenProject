@@ -17,65 +17,62 @@ import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.mapreduce.lib.input.FileInputFormat;
 import org.apache.hadoop.mapreduce.lib.output.FileOutputFormat;
 import org.apache.hadoop.mapreduce.Counter;
+import org.apache.hadoop.util.GenericOptionsParser;
 
 public class WordCount {
 
-  public static class TokenizerMapper
-       extends Mapper<Object, Text, Text, Text>{
+  public static class TokenizerMapper 
+         extends Mapper<Object, Text, Text, Text> {
     static enum CountersEnum { INPUT_WORDS }
 
     private Text word = new Text();
-
-    private Set<String> patternsToSkip = new HashSet<>();
+    
+    private Set<String> patternsToSkip=new HashSet<>();
     private Set<String> punctuation=new HashSet<>();
 
-    @Override
-    public void setup(Context context) throws IOException,
-        InterruptedException {
-      FileSystem fs = FileSystem.get(context.getConfiguration());
+    protected void setup(Context context) throws IOException, InterruptedException{
+        FileSystem fs = FileSystem.get(context.getConfiguration());
 
-      Path path1 = new Path("hdfs://lyyq181850099-master:9000/wordcount/stop-word-list.txt");
-      BufferedReader reader1 = new BufferedReader(new InputStreamReader(fs.open(path1)));
-      String line;
-      while ((line = reader1.readLine()) != null) {
-          patternsToSkip.add(line.toLowerCase());
-      }
-      reader1.close();
-      Path path2 = new Path("hdfs://lyyq181850099-master:9000/wordcount/punctuation.txt");
-      BufferedReader reader2 = new BufferedReader(new InputStreamReader(fs.open(path2)));
-      String line2;
-      while ((line2 = reader2.readLine()) != null) {
-          punctuation.add(line2.toLowerCase());
+        Path path1 = new Path("hdfs://lyyq181850099-master:9000/wordcount/stop-word-list.txt");
+        BufferedReader reader1 = new BufferedReader(new InputStreamReader(fs.open(path1)));
+        String line;
+        while ((line = reader1.readLine()) != null) {
+            patternsToSkip.add(line.toLowerCase());
         }
-      reader2.close();
+        reader1.close();
+
+        Path path2 = new Path("hdfs://lyyq181850099-master:9000/wordcount/punctuation.txt");
+        BufferedReader reader2 = new BufferedReader(new InputStreamReader(fs.open(path2)));
+        String line2;
+        while ((line2 = reader2.readLine()) != null) {
+            punctuation.add(line2.toLowerCase());
+        }
+        reader2.close();
     }
 
-    @Override
-    public void map(Object key, Text value, Context context
-                    ) throws IOException, InterruptedException {
-      String line = value.toString().toLowerCase();
-      line = line.replaceAll("\\d+"," ");
-      for (String pattern : patternsToSkip) {
-        line = line.replaceAll(pattern, "");
-      }
-      for(String punc : punctuation){
-        line = line.replaceAll(punc,"");
-      }
-      StringTokenizer itr = new StringTokenizer(line);
-      while (itr.hasMoreTokens()) {
-        String wordstr=itr.nextToken();
-        if(wordstr.length()>=3){
-          word.set(wordstr);
-          context.write(word, new Text("1"));
-          Counter counter = context.getCounter(CountersEnum.class.getName(),
-          CountersEnum.INPUT_WORDS.toString());
-          counter.increment(1);
+    public void map(Object key, Text value, Context context) throws IOException, InterruptedException {
+        StringTokenizer itr = new StringTokenizer(value.toString());
+        while (itr.hasMoreTokens()) {
+            String wordstr=itr.nextToken().toLowerCase();
+            for (String pun: punctuation ){
+                wordstr=wordstr.replaceAll(pun,"");
+            }
+            for (String pskip: patternsToSkip){
+              wordstr=wordstr.replaceAll(pskip,"");
+            }
+            if(wordstr.length()<3)
+                continue;
+           else{
+                word.set(wordstr);
+                context.write(word, new Text("1"));
+                Counter counter = context.getCounter(CountersEnum.class.getName(),
+                CountersEnum.INPUT_WORDS.toString());
+                counter.increment(1);
+            }
         }
-      }
     }
   }
   
-
 public static class IntSumReducer
     extends Reducer<Text,Text,Text,Text> {
   private IntWritable result = new IntWritable();
@@ -114,6 +111,12 @@ public static class IntSumReducer
   
   public static void main(String[] args) throws Exception {
     Configuration conf = new Configuration();
+
+    String[] otherArgs = new GenericOptionsParser(conf, args).getRemainingArgs();
+    if (otherArgs.length != 3) {
+      System.err.println("Usage: wordcount <in> <out> -skip");
+      System.exit(2);
+    }
     
     Job job = Job.getInstance(conf, "word count");
     job.setJarByClass(WordCount.class);
@@ -123,14 +126,14 @@ public static class IntSumReducer
     job.setOutputKeyClass(Text.class);
     job.setOutputValueClass(Text.class);
 
-    Path outPath=new Path(args[1]);
+    Path fileoutPath=new Path(args[1]);
         FileSystem fs = FileSystem.get(conf);
-        if (fs.exists(outPath)) {
-            fs.delete(outPath, true);
+        if (fs.exists(fileoutPath)) {
+            fs.delete(fileoutPath, true);
         }
 
     FileInputFormat.addInputPath(job, new Path(args[0]));
-    FileOutputFormat.setOutputPath(job, new Path(args[1]));
+    FileOutputFormat.setOutputPath(job, fileoutPath);
     System.exit(job.waitForCompletion(true) ? 0 : 1);
   }
 }
