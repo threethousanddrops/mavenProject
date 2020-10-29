@@ -31,7 +31,7 @@
   ③编写代码。
 
 三、设计思路
-  ①在wordcount2.0的基础上实现功能，首先考虑读入stop-word-list.txt和punctuation.txt，在操作对象文件里除去停词，wordcount2.0只实现了一个停词文件路径读入，要实现同时去除stopword和punctuation，有两个想法：一是设置两个读入的文件路径，加入patternsToskip进行replace；二是将stop-listword.txt通过parseSkipFile读入后消去，而标点符号可以直接通过正则表达式replace掉，不需要另外设置punctuation.txt的读入路径。由于最后在wordcount2.0的框架下没能成功实现读入两个文件，于是直接在class TokenizerMapper中设置setup函数，通过绝对路径（例如：hdfs://lyyq181850099-master:9000 /wordcount /stop-word-list. txt）直接读入两个文件，进行处理。
+  ①在wordcount2.0的基础上实现功能，首先考虑读入stop-word-list.txt和punctuation.txt，在操作对象文件里除去停词，wordcount2.0只实现了一个停词文件路径读入，要实现同时去除stopword和punctuation，有两个想法：一是设置两个读入的文件路径，加入patternsToskip进行replace；二是将stop-listword.txt通过parseSkipFile读入后消去，而标点符号可以直接通过正则表达式replace掉，不需要另外设置punctuation.txt的读入路径。由于最后在wordcount2.0的框架下没能成功实现读入两个文件，于是直接在class TokenizerMapper中设置setup函数，通过绝对路径（例如：hdfs://lyyq181850099-master:9000 /wordcount /stop-word-list. txt）直接读入两个文件，分别设置patternsToskip和punctuation进行处理。此处需要注意：如果patternsToskip和punctuation都用replaceall来处理，会导致长单词中的部分也会被消去，例如若low是停词，则yellow经过处理后只会剩下yel，最后通过contains的判断确定当前token的值是否在patternsToskip中，如果在，则不进行context.write，而punctuation则可以用replaceall直接处理，可以解决问题。
   ②实现去除所有数字，在class TokenizerMapper中的map函数里通过正则表达式实现忽略数字的功能。
   ③实现降序输出，mapreduce默认的输出形式是升序，此处有两个想法；一是新建立一个sortjob完成降序排列功能，将统计和排序分开进行；二是在reduce一个细节的过程中进行排序，统计sum之后排序再进行context.write。由于java水平不够，新建立sortjob实现过程中发现运行jar速度非常慢，map进展情况没有达到预期且特别占用内存，于是根据查找到的示例尝试用在reduce中建立treemap进行降序处理。
   ④输出过程格式要求为“<排名>：<单词>，<次数>”，尝试在reduce时word.set过程中将word指定为要求输出格式，然后在value值中设置空白输出，可以实现指定要求的降序输出，与此同时在循环中计数，输出一百个之后return。
