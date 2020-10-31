@@ -1,5 +1,7 @@
 # mavenProject
 
+（10/31发现运行截图无法显示所以重传，images和readme显示为该日更新状态）
+
 实验编译环境：本地vscode& java14 & apache-maven3.6.3 
 实验运行环境：BDKIT
 
@@ -10,7 +12,6 @@
 ![output1](https://github.com/threethousanddrops/mavenProject/blob/main/images/output1.png)
 ![output2](https://github.com/threethousanddrops/mavenProject/blob/main/images/output2.png)
 ![output3](https://github.com/threethousanddrops/mavenProject/blob/main/images/output3.png)
-
 
 一．配置java和maven环境。（由于起初没有记录实验思路的要求，配置环境等过程没有截图）
  ①下载java与maven安装包。
@@ -36,3 +37,6 @@
   ③实现降序输出，mapreduce默认的输出形式是升序，此处有两个想法；一是新建立一个sortjob完成降序排列功能，将统计和排序分开进行；二是在reduce一个细节的过程中进行排序，统计sum之后排序再进行context.write。由于java水平不够，新建立sortjob实现过程中发现运行jar速度非常慢，map进展情况没有达到预期且特别占用内存，于是根据查找到的示例尝试用在reduce中建立treemap进行降序处理。
   ④输出过程格式要求为“<排名>：<单词>，<次数>”，尝试在reduce时word.set过程中将word指定为要求输出格式，然后在value值中设置空白输出，可以实现指定要求的降序输出，与此同时在循环中计数，输出一百个之后return。
   ⑤main的实现基本在wordcount2.0的框架上进行，其中一个细节需要注意：在实现输出之前判断output路径是否存在，如果已经存在，则删除已经存在的output文件夹，以免测试过程中不断生成新的output文件夹占用内存。
+  
+ 四、不足与改进之处
+  实现过程中最大的不足是没有能利用wordcount2.0框架实现在命令行读入两个及以上的停词文件，只成功实现了一个文件的读入操作，现阶段要读入两个文件进行筛选统计，只能通过代码行的绝对路径读入文件，如果停词文件名称或者路径有变动的话必须要改动代码，非常不便于操作；其次，没能成功新建函数实现特定格式的输入，最后只能将set过程中预先设定输出格式，而在value值上进行空白输出达到要求，后续会对这两点问题进行思考与改进。
